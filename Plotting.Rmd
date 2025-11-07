@@ -1,0 +1,754 @@
+#Libraries
+```{r}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(broom)
+library(viridisLite)  
+library(stringr)
+library(pmplot)
+```
+
+#Fig1
+```{r}
+fig1 <- read.csv("../Rocio-Figures/Fig1.csv")
+fig1 <- fig1 %>%
+  mutate(across(starts_with("Rep"), ~ as.numeric(sub("%", "", .))))
+fig1_long <- fig1 %>%
+  pivot_longer(cols = starts_with("Rep"), names_to = "Rep", values_to = "Value")
+```
+
+##Intial plotting
+```{r}
+compound_order <- c(
+  # PFCAs
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  
+  # PFSAs
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  
+  # FTSs
+  "4:2 FTS", "6:2 FTS", "8:2 FTS",
+  
+  # FOSAA and FOSA
+  "N_MeFOSAA", "N_EtFOSAA", "FOSA"
+)
+Compounds <- c(
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  "4:2 FTS", "6:2 FTS", "8:2 FTS", "N_MeFOSAA", "N_EtFOSAA","FOSA"
+)
+fig1_long$Compounds <- gsub("4_2_FTS", "4:2 FTS", fig1_long$Compounds)
+fig1_long$Compounds <- gsub("6_2_FTS", "6:2 FTS", fig1_long$Compounds)
+fig1_long$Compounds <- gsub("8_2_FTS", "8:2 FTS", fig1_long$Compounds)
+assign_group <- function(x) {
+  # PFCAs by chain length
+  if(x %in% c("PFBA","PFPeA","PFHxA","PFHpA","PFOA","PFNA","PFDA")) return("PFCAs_C4_C10")
+  else if(x %in% c("PFUdA","PFDoA","PFTrDA","PFTeDA")) return("PFCAs_C11_C14")
+  
+  # PFSAs by chain length
+  else if(x %in% c("PFBS","PFPeS","PFHxS","PFHpS","PFOS")) return("PFSAs_C4_C8")
+  else if(x %in% c("PFNS","PFDS")) return("PFSAs_C9_C10")
+  
+  # N_2_FTS by chain length
+  else if(x %in% c("4:2 FTS","6:2 FTS")) return("N_2_FTS_C6")
+  else if(x == "8:2 FTS") return("N_2_FTS_C8")
+  else if(x == "10_2_FTS") return("N_2_FTS_C10")  # if present
+  
+  # FOSAs
+  else if(x %in% c("N_MeFOSAA","N_EtFOSAA")) return("FOSAs-N")
+  else if(x == "FOSA") return("FOSAs-A")
+  
+  else return(NA)
+}
+
+group_order <- c("PFCAs_C4_C10", "PFCAs_C11_C14","PFSAs_C4_C8", "PFSAs_C9_C10","N_2_FTS_C6","N_2_FTS_C8","FOSAs-N", "FOSAs-A")
+# Create the final dataframe with groups
+df <- data.frame(
+  Original = Compounds,
+  Group = sapply(Compounds, assign_group),
+  stringsAsFactors = FALSE
+)
+
+# Map Group to fig1_long based on Compounds
+fig1_long$Group <- df$Group[match(fig1_long$Compounds, df$Original)]
+replicate_avg <- fig1_long %>%
+  group_by(Result, Species, Compounds) %>%
+  summarise(
+    Value = mean(Value, na.rm = TRUE),
+    .groups = "drop"
+  )
+summary_df <- replicate_avg %>%
+  mutate(Group = sapply(Compounds, assign_group)) %>% 
+  group_by(Result, Species, Group) %>% 
+  summarise( Mean = mean(Value, na.rm = TRUE), 
+             SD = sd(Value, na.rm = TRUE), 
+             SE = SD / sqrt(sum(!is.na(Value))), 
+             n = sum(!is.na(Value)), .groups = "drop" ) %>%
+  filter(n > 0) %>%
+  mutate(Result_num = as.numeric(gsub("[^0-9.]", "", Result)))  
+summary_df$Group <- factor(summary_df$Group, levels = group_order)
+
+for (s in unique(summary_df$Species)) {
+  df_sub <- summary_df %>% filter(Species == s)
+  
+  p <- ggplot(df_sub, aes(x = Result_num, y = Mean, color = Group, group = Group)) +
+    geom_line(size = 1, alpha = 0.8) +
+    geom_point(size = 3) +
+    geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+                position = position_dodge(width = 0.8),
+                width = 8) +
+    geom_hline(yintercept = 80, linetype = "dotted", color = "black", linewidth = 0.8) +
+    scale_color_viridis_d(option = "plasma") +
+    scale_x_continuous(breaks = sort(unique(df_sub$Result_num))) +
+    scale_y_continuous(limits = c(0, 112), breaks = seq(0, 100, by = 25)) +
+    theme_minimal(base_size = 12) +
+ theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+      panel.grid.minor = element_blank(),
+      legend.position = "right",
+     strip.text = element_text(size = 12)
+    ) +
+    labs(
+      title = paste("Species:", s),
+      x = "% MeOH",
+      y = "% Extraction",
+      color = "Group"
+    )
+  
+  print(p)
+  
+  ggsave(
+    filename = paste0("../Rocio-Figures/plots/fig1_total_", s, ".png"),
+    plot = p,
+    width = 6, height = 4, dpi = 300, limitsize = FALSE
+  )
+}
+
+summary_df <- fig1_long %>%
+  group_by(Result, Species, Group, Compounds) %>%
+  summarise(
+    Mean = mean(Value, na.rm = TRUE),
+    SD   = sd(Value, na.rm = TRUE),
+    SE   = SD / sqrt(sum(!is.na(Value))),
+    n    = sum(!is.na(Value)),
+    .groups = "drop"
+  ) %>%
+  filter(n > 0) %>%
+  mutate(Result_num = as.numeric(gsub("[^0-9.]", "", Result)))  # ensure numeric x-axis
+summary_df$Group <- factor(summary_df$Group, levels = group_order)
+summary_df$Compounds <- factor(summary_df$Compounds, levels = compound_order)
+# ---- Plot loop ----
+for (s in unique(summary_df$Species)) {
+  df_sub <- summary_df %>% filter(Species == s)
+  
+  p <- ggplot(df_sub, aes(x = Result_num, y = Mean, color = Group, group = Compounds)) +
+    geom_line(alpha = 0.6, linewidth = 0.8) +
+    geom_point(size = 2, alpha = 0.8) +
+  geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+                position = position_dodge(width = 0.8),
+                width = 0.5) +
+    geom_hline(yintercept = 80, linetype = "dotted", color = "black", linewidth = 0.8) +
+    facet_wrap(~Compounds, ncol = 3) +
+    scale_color_viridis_d(option = "plasma") +
+    scale_x_continuous(breaks = sort(unique(df_sub$Result_num))) +
+    scale_y_continuous(limits = c(0, 135), breaks = seq(0, 125, by = 25)) +
+    theme_minimal(base_size = 12) +
+ theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+      panel.grid.minor = element_blank(),
+      legend.position = "right",
+     strip.text = element_text(size = 12)
+    ) +
+    labs(
+      title = paste("Species:", s),
+      x = "% MeOH",
+      y = "% Extraction",
+      color = "Group"
+    )
+  
+  print(p)
+  
+  ggsave(
+    filename = paste0("../Rocio-Figures/plots/fig1_individual_", s, ".png"),
+    plot = p,
+    width = 10, height = 10, dpi = 300, limitsize = FALSE
+  )
+}
+
+
+```
+
+#Fig2
+```{r}
+fig2 <- read.csv("../Rocio-Figures/Fig2.csv")
+fig2 <- fig2 %>%
+  mutate(across(starts_with("Rep"), ~ as.numeric(sub("%", "", .))))
+fig2_long <- fig2 %>%
+  pivot_longer(cols = starts_with("Rep"), names_to = "Rep", values_to = "Value")
+```
+
+##Intial plotting
+```{r}
+Compounds <- c(
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  "4:2 FTS", "6:2 FTS", "8:2 FTS", "N_MeFOSAA", "N_EtFOSAA","FOSA"
+)
+fig2_long$Compounds <- gsub("4_2_FTS", "4:2 FTS", fig2_long$Compounds)
+fig2_long$Compounds <- gsub("6_2_FTS", "6:2 FTS", fig2_long$Compounds)
+fig2_long$Compounds <- gsub("8_2_FTS", "8:2 FTS", fig2_long$Compounds)
+assign_group <- function(x) {
+  if(x %in% c("PFBA","PFPeA","PFHxA","PFHpA","PFOA", "PFNA","PFDA","PFUdA","PFDoA","PFTrDA","PFTeDA")) return("PFCAs")
+  else if(x %in% c("PFBS","PFPeS","PFHxS","PFHpS","PFOS","PFNS","PFDS" )) return("PFSAs")
+  else if(x %in% c("4:2 FTS","6:2 FTS","8:2 FTS")) return("N_2_fts (C6 & C8)")
+  else if(x %in% c("N_MeFOSAA","N_EtFOSAA")) return("FOSAs-N")
+  else if(x == "FOSA") return("FOSAs-A")
+  else return(NA)
+}
+compound_order <- c(
+  # PFCAs
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  
+  # PFSAs
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  
+  # FTSs
+  "4:2 FTS", "6:2 FTS", "8:2 FTS",
+  
+  # FOSAA and FOSA
+  "N_MeFOSAA", "N_EtFOSAA", "FOSA"
+)
+# Create the final dataframe with groups
+df <- data.frame(
+  Original = Compounds,
+  Group = sapply(Compounds, assign_group),
+  stringsAsFactors = FALSE
+)
+
+# Map Group to fig2_long based on Compounds
+fig2_long$Group <- df$Group[match(fig2_long$Compounds, df$Original)]
+
+summary_df <- fig2_long %>%
+  group_by(Compounds,Method) %>%
+  summarise(
+    Mean = mean(Value, na.rm = TRUE),
+    SD = sd(Value, na.rm = TRUE),
+    SE = SD / sqrt(sum(!is.na(Value))),
+    n = sum(!is.na(Value)),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = sapply(Compounds, assign_group)) %>%  # Add Group column
+  filter(n > 0)
+summary_df$Compounds <- factor(summary_df$Compounds, levels = compound_order)
+
+
+# Set proper group order for facets
+summary_df$Group <- factor(summary_df$Group,
+                       levels = c("PFCAs", "PFSAs", "N_2_fts (C6 & C8)", "FOSAs-N", "FOSAs-A"))
+
+
+ d <- ggplot(summary_df, aes(x = Compounds, y = Mean, color = Method)) +
+  geom_point(position = position_dodge(width = 0.8), size = 3) +
+  geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+                position = position_dodge(width = 0.8),
+                width = 0.5) +
+  geom_hline(yintercept = 80, linetype = "dotted", color = "black", linewidth = 0.7) +  # <-- add dotted line at y = 80
+  scale_color_manual(values = c(
+    "0.05mL" = "#f48849",
+    "0.1mL"  = "#b83289",
+    "0.2mL"  = "#7e03a8",
+    "0.4mL"  = "#5302a3"
+  )) +
+  facet_grid(~ Group, scales = "free_x", space = "free_x", drop = TRUE) +
+  theme_minimal(base_size = 12) +
+ theme(
+       axis.text.x = element_text(angle = 45, hjust = 1, size =12),
+  strip.text.x = element_text(angle = 60, hjust = 0.5, vjust = 0.5, size = 12),
+      panel.grid.minor = element_blank(),
+      legend.position = "right"
+    ) +
+     scale_y_continuous(limits = c(0, 110), breaks = seq(0, 100, by = 25)) +
+  labs(
+    x = NULL,
+    y = "%",
+    color = "Method"
+  )
+
+
+print(d)
+
+ggsave(
+  filename = "../Rocio-Figures/plots/fig2.png", 
+  plot = d,                                      
+  width = 10,
+  height = 6,
+  limitsize = FALSE,
+  dpi = 300
+)
+```
+
+#Fig4
+```{r}
+fig4 <- read.csv("../Rocio-Figures/Fig4.csv")
+fig4 <- fig4 %>%
+  mutate(across(starts_with("Rep"), ~ as.numeric(sub("%", "", .))))
+fig4_long <- fig4 %>%
+  pivot_longer(cols = starts_with("Rep"), names_to = "Rep", values_to = "Value")
+```
+
+##Intial plotting
+```{r}
+compound_order <- c(
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  "4_2_FTS", "6_2_FTS", "8_2_FTS", "N_MeFOSAA", "N_EtFOSAA","FOSA","MPFBA","M5PFPeA","M5PFHxA","M4PFHpA","M8PFOA","M9PFNA","M6PFDA","M7PFUdA","MPFDoA","M2PFTeDA","M3PFBS","M3PFHxS","M8PFOS","M2_4_2_FTS","M2_6_2_FTS","M2_8_2_FTS","D2_N_MeFOSAA","D5_N_EtFOSAA","M8FOSA"
+)
+
+summary_df <- fig4_long %>%
+  group_by(Compounds, Species, Method, Result) %>%
+  summarise(
+    Mean = mean(Value, na.rm = TRUE),
+    SD = sd(Value, na.rm = TRUE),
+    SE = SD / sqrt(sum(!is.na(Value))),
+    n = sum(!is.na(Value)),
+    .groups = "drop"
+  ) %>%
+  filter(n > 0)
+summary_df$Compounds <- factor(summary_df$Compounds, levels = compound_order)
+for (r in unique(summary_df$Result)) {
+  df_sub <- summary_df %>% filter(Result == r)
+ d <- ggplot(df_sub, aes(x = Compounds, y = Mean, color = Method, shape = Species)) +
+    geom_point(position = position_dodge(width = 0.8), size = 2) +
+  geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+                position = position_dodge(width = 0.8),
+                width = 0.3) +
+  facet_wrap(~ Species) + 
+  scale_shape_manual(values = c("Mouse" = 17, "Human" = 16)) +  # open circle = 1, filled = 16
+    scale_color_manual(values = c(
+    "uSPE" = "#f48849",   # bright yellow
+    "PP"   = "#b83289",   # dark purple
+    "PP_uSPE"  = "#5302a3"    # teal
+  )) +                    # color by Method
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    x = NULL,
+    y = "%",
+    color = "Method",
+    shape = "Species",
+    title = paste( r)
+  )
+ print(d)
+ 
+}
+```
+##Process and stats
+```{r}
+
+results_list <- list()
+
+for (s in unique(fig4_long$Species)) {
+  df_sub <- fig4_long %>% filter(Species == s)
+  
+  if (s == "Human") {
+    # --- Unpaired t-test across methods (2 groups) for each compound ---
+    res <- df_sub %>%
+      group_by(Result, Compounds) %>%
+      group_modify(~ {
+        if (length(unique(.x$Method)) == 2) {
+          broom::tidy(t.test(Value ~ Method, data = .x))
+        } else tibble()
+      }) %>%
+      ungroup() %>%
+      mutate(Species = s)
+    
+  } else if (s == "Mouse") {
+    # --- One-way ANOVA across 3 methods for each compound ---
+    res <- df_sub %>%
+      group_by(Result, Compounds) %>%
+      group_modify(~ {
+        if (length(unique(.x$Method)) > 1) {
+          broom::tidy(aov(Value ~ Method, data = .x))
+        } else tibble()
+      }) %>%
+      ungroup() %>%
+      mutate(Species = s)
+  }
+  
+  results_list[[s]] <- res
+}
+
+# Combine all results
+test_results <- bind_rows(results_list)
+
+
+# --- 2️⃣ Add significance stars ---
+test_results <- test_results %>%
+  mutate(
+    significance = case_when(
+      p.value < 0.001 ~ "c",
+      p.value < 0.01  ~ "b",
+      p.value < 0.05  ~ "a",
+      TRUE ~ ""
+    )
+  )
+
+# Preview
+
+tukey_mouse <- fig4_long %>%
+  filter(Species == "Mouse") %>%
+  group_by(Result, Compounds) %>%
+  group_modify(~ {
+    if (length(unique(.x$Method)) > 1) {
+      aov_res <- aov(Value ~ Method, data = .x)
+      broom::tidy(TukeyHSD(aov_res))
+    } else tibble()
+  }) %>%
+  ungroup() %>%
+  mutate(
+    Species = "Mouse",
+    # Split the contrast into two groups
+    group1 = str_split(contrast, "-", simplify = TRUE)[,1],
+    group2 = str_split(contrast, "-", simplify = TRUE)[,2],
+    adj.p.value = adj.p.value, # keep same naming convention
+    significance = case_when(
+      adj.p.value < 0.001 ~ "c",
+      adj.p.value < 0.01  ~ "b",
+      adj.p.value < 0.05  ~ "a",
+      TRUE ~ ""
+    ),
+    conf.low = conf.low,
+    conf.high = conf.high,
+    estimate = estimate
+  ) %>%
+  select(Species, Result, Compounds, group1, group2,
+         estimate, conf.low, conf.high, adj.p.value, significance)
+
+
+# --- 2️⃣ Human: unpaired t-test between 2 methods ---
+tukey_human <- fig4_long %>%
+  filter(Species == "Human") %>%
+  group_by(Result, Compounds) %>%
+  group_modify(~ {
+    methods <- unique(.x$Method)
+    if (length(methods) == 2) {
+      t_res <- broom::tidy(t.test(Value ~ Method, data = .x))
+      # Add group1, group2, and Species manually
+      t_res <- t_res %>%
+        mutate(
+          group1 = methods[1],
+          group2 = methods[2],
+          Species = "Human"
+        )
+    } else tibble()
+  }) %>%
+  ungroup() %>%
+  mutate(
+    # Rename p.value for consistency with Tukey output
+    adj.p.value = p.value,
+    significance = case_when(
+      adj.p.value < 0.001 ~ "c",
+      adj.p.value < 0.01  ~ "b",
+      adj.p.value < 0.05  ~ "a",
+      TRUE ~ ""
+    )
+  ) %>%
+  select(Species, Result, Compounds, group1, group2,
+         estimate, conf.low, conf.high, adj.p.value, significance)
+
+
+# --- 3️⃣ Combine into one tidy dataframe ---
+tukey_results <- bind_rows(tukey_human, tukey_mouse)
+
+# ✅ unified output, same structure for both
+tukey_results
+```
+##Plot with sig
+```{r}
+
+# Mapping of Result -> compounds to annotate
+compounds_to_annotate <- list(
+  "Post"  = c("FOSA", "N_MeFOSAA", "N_EtFOSAA"),
+  "Pre"   = c("FOSA"),
+  "Matrix" = c(
+    "M2_4_2_FTS",
+    "M2_6_2_FTS",
+    "M2_8_2_FTS",
+    "D5_N_EtFOSAA"
+  )
+)
+
+#Facet by group plot
+Compounds <- c(
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  "4:2 FTS", "6:2 FTS", "8:2 FTS", "N_MeFOSAA", "N_EtFOSAA","FOSA"
+)
+fig4_long$Compounds <- gsub("4_2_FTS", "4:2 FTS", fig4_long$Compounds)
+fig4_long$Compounds <- gsub("6_2_FTS", "6:2 FTS", fig4_long$Compounds)
+fig4_long$Compounds <- gsub("8_2_FTS", "8:2 FTS", fig4_long$Compounds)
+assign_group <- function(x) {
+  if(x %in% c("PFBA","PFPeA","PFHxA","PFHpA","PFOA", "PFNA","PFDA","PFUdA","PFDoA","PFTrDA","PFTeDA")) return("PFCAs")
+  else if(x %in% c("PFBS","PFPeS","PFHxS","PFHpS","PFOS","PFNS","PFDS" )) return("PFSAs")
+  else if(x %in% c("4:2 FTS","6:2 FTS","8:2 FTS")) return("N_2_fts (C6 & C8)")
+  else if(x %in% c("N_MeFOSAA","N_EtFOSAA")) return("FOSAs-N")
+  else if(x == "FOSA") return("FOSAs-A")
+  else return(NA)
+}
+compound_order <- c(
+  # PFCAs
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  
+  # PFSAs
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  
+  # FTSs
+  "4:2 FTS", "6:2 FTS", "8:2 FTS",
+  
+  # FOSAA and FOSA
+  "N_MeFOSAA", "N_EtFOSAA", "FOSA"
+)
+# Create the final dataframe with groups
+df <- data.frame(
+  Original = Compounds,
+  Group = sapply(Compounds, assign_group),
+  stringsAsFactors = FALSE
+)
+
+# Map Group to fig4_long based on Compounds
+fig4_long$Group <- df$Group[match(fig4_long$Compounds, df$Original)]
+
+summary_df <- fig4_long %>%
+  group_by(Compounds, Species, Method, Result) %>%
+  summarise(
+    Mean = mean(Value, na.rm = TRUE),
+    SD = sd(Value, na.rm = TRUE),
+    SE = SD / sqrt(sum(!is.na(Value))),
+    n = sum(!is.na(Value)),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = sapply(Compounds, assign_group)) %>%  # Add Group column
+  filter(n > 0)
+summary_df$Compounds <- factor(summary_df$Compounds, levels = compound_order)
+
+for (r in unique(summary_df$Result)) {
+
+  ## ---------- prepare df_sub (only real combos) ----------
+  df_sub <- summary_df %>%
+    filter(Result == r) %>%
+    mutate(Group = sapply(Compounds, assign_group)) %>%
+    filter(!is.na(Compounds)) %>%
+    # ensure character so we don't carry global factor levels
+    mutate(Compounds = as.character(Compounds),
+           Species   = as.character(Species)) %>%
+    # create local factor ordering per Species x Group
+    group_by(Species, Group) %>%
+    mutate(Compounds = factor(as.character(Compounds))) %>%
+    ungroup() %>%
+    droplevels()
+
+# Apply correct compound order (not to Group)
+df_sub$Compounds <- factor(df_sub$Compounds, levels = compound_order)
+
+# Set proper group order for facets
+df_sub$Group <- factor(df_sub$Group,
+                       levels = c("PFCAs", "PFSAs", "N_2_fts (C6 & C8)", "FOSAs-N", "FOSAs-A"))
+
+  ## ---------- prepare tukey rows and attach Group from df_sub ----------
+  tukey_sub <- tukey_results %>%
+    filter(Result == r) %>%
+    filter((group1 == "uSPE" & group2 == "PP") | (group1 == "PP" & group2 == "uSPE")) %>%
+    mutate(Compounds = as.character(Compounds),
+           Species   = as.character(Species)) %>%
+    select(Compounds, Species, significance)
+
+  # IMPORTANT: join in Group from df_sub so star_positions has Group
+  tukey_sub2 <- inner_join(
+    tukey_sub,
+    df_sub %>% select(Compounds, Species, Group) %>% distinct(),
+    by = c("Compounds", "Species")
+  )
+
+  cat("tukey rows after joining group:", nrow(tukey_sub2), "\n")
+
+  ## ---------- compute star positions only for combos that exist ----------
+  if (nrow(tukey_sub2) > 0) {
+    ybase_df <- df_sub %>%
+      group_by(Compounds, Species, Group) %>%
+      summarise(y_base = max(Mean + SD, na.rm = TRUE) + 0.05, .groups = "drop")
+
+    star_positions <- tukey_sub2 %>%
+      left_join(ybase_df, by = c("Compounds", "Species", "Group")) %>%
+      filter(!is.na(y_base), !is.na(significance), significance != "") %>%
+      group_by(Compounds, Species, Group) %>%
+      mutate(y_pos = y_base + row_number()+ 25) %>%
+      ungroup()
+
+    # align factor levels so x mapping is identical to df_sub
+    star_positions$Compounds <- factor(as.character(star_positions$Compounds),
+                                       levels = levels(df_sub$Compounds))
+
+    # ensure Group is a factor too (matching df_sub)
+    star_positions$Group <- factor(as.character(star_positions$Group),
+                                   levels = unique(as.character(df_sub$Group)))
+
+    # DEBUG: show star_positions that will be plotted
+    cat("star_positions rows to be plotted:\n")
+    print(star_positions)
+  } else {
+    star_positions <- NULL
+  }
+
+  ## ---------- plotting ----------
+  p <- ggplot(df_sub, aes(x = Compounds, y = Mean, color = Method, shape = Species)) +
+    geom_point(position = position_dodge(width = 0.8), size = 3) +
+    geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+                  position = position_dodge(width = 0.8),
+                  width = 0.5) +
+    facet_grid(Species ~ Group, scales = "free_x", space = "free_x", drop = TRUE) +
+    scale_shape_manual(values = c("Mouse" = 17, "Human" = 16)) +
+    scale_color_manual(values = c("uSPE" = "#f48849", "PP" = "#b83289", "PP_uSPE" = "#5302a3")) +
+    theme_minimal(base_size = 12) +
+    theme(
+      
+  axis.text.x = element_text(angle = 45, hjust = 1, size =12),
+  strip.text.x = element_text(angle = 60, hjust = 0.5, vjust = 0.5, size = 12),
+  panel.grid.minor = element_blank()) +
+  labs(x = NULL, y = "%", color = "Method", shape = "Species", title = paste(r)) +
+    scale_y_continuous(expand = expansion(mult = c(0.2, 0.15)))  # <-- add 15% space on to)
+
+  if (!is.null(star_positions) && nrow(star_positions) > 0) {
+    # now that star_positions contains Group & Species, stars will ONLY appear in the matching panel
+    p <- p + geom_text(
+      data = star_positions,
+      aes(x = Compounds, y = y_pos, label = significance),
+      inherit.aes = FALSE,
+      vjust = 0,
+      color = "black",
+    size = 5 
+    )
+
+  }
+
+  print(p)
+   ggsave(paste0("../Rocio-Figures/plots/fig4_", r, ".png"), p, width = 10, height = 6, limitsize = F, dpi = 300)
+}
+
+```
+
+
+#Fig5
+```{r}
+fig5 <- read.csv("../Rocio-Figures/Fig5.csv")
+fig5 <- fig5 %>%
+  mutate(across(starts_with("Rep"), ~ as.numeric(sub("%", "", .))))
+fig5_long <- fig5 %>%
+  pivot_longer(cols = starts_with("Rep"), names_to = "Rep", values_to = "Value")
+```
+
+##Intial plotting
+```{r}
+Compounds <- c(
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  "4:2 FTS", "6:2 FTS", "8:2 FTS", "N_MeFOSAA", "N_EtFOSAA","FOSA"
+)
+fig5_long$Compounds <- gsub("4_2_FTS", "4:2 FTS", fig5_long$Compounds)
+fig5_long$Compounds <- gsub("6_2_FTS", "6:2 FTS", fig5_long$Compounds)
+fig5_long$Compounds <- gsub("8_2_FTS", "8:2 FTS", fig5_long$Compounds)
+assign_group <- function(x) {
+  if(x %in% c("PFBA","PFPeA","PFHxA","PFHpA","PFOA", "PFNA","PFDA","PFUdA","PFDoA","PFTrDA","PFTeDA")) return("PFCAs")
+  else if(x %in% c("PFBS","PFPeS","PFHxS","PFHpS","PFOS","PFNS","PFDS" )) return("PFSAs")
+  else if(x %in% c("4:2 FTS","6:2 FTS","8:2 FTS")) return("N_2_fts (C6 & C8)")
+  else if(x %in% c("N_MeFOSAA","N_EtFOSAA")) return("FOSAs-N")
+  else if(x == "FOSA") return("FOSAs-A")
+  else return(NA)
+}
+compound_order <- c(
+  # PFCAs
+  "PFBA", "PFPeA", "PFHxA", "PFHpA", "PFOA", "PFNA", "PFDA",
+  "PFUdA", "PFDoA", "PFTrDA", "PFTeDA",
+  
+  # PFSAs
+  "PFBS", "PFPeS", "PFHxS", "PFHpS", "PFOS", "PFNS", "PFDS",
+  
+  # FTSs
+  "4:2 FTS", "6:2 FTS", "8:2 FTS",
+  
+  # FOSAA and FOSA
+  "N_MeFOSAA", "N_EtFOSAA", "FOSA"
+)
+# Create the final dataframe with groups
+df <- data.frame(
+  Original = Compounds,
+  Group = sapply(Compounds, assign_group),
+  stringsAsFactors = FALSE
+)
+
+# Map Group to fig5_long based on Compounds
+fig5_long$Group <- df$Group[match(fig5_long$Compounds, df$Original)]
+
+summary_df <- fig5_long %>%
+  group_by(Compounds, Species, Method, Result) %>%
+  summarise(
+    Mean = mean(Value, na.rm = TRUE),
+    SD = sd(Value, na.rm = TRUE),
+    SE = SD / sqrt(sum(!is.na(Value))),
+    n = sum(!is.na(Value)),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = sapply(Compounds, assign_group)) %>%  # Add Group column
+  filter(n > 0)
+summary_df$Compounds <- factor(summary_df$Compounds, levels = compound_order)
+summary_df$Compounds <- factor(summary_df$Compounds, levels = compound_order)
+
+# Set proper group order for facets
+summary_df$Group <- factor(summary_df$Group,
+                       levels = c("PFCAs", "PFSAs", "N_2_fts (C6 & C8)", "FOSAs-N", "FOSAs-A"))
+
+
+for (r in unique(summary_df$Result)) {
+  df_sub <- summary_df %>% filter(Result == r)
+ d <- ggplot(df_sub, aes(x = Compounds, y = Mean, color = Species, shape = Species)) +
+ geom_point(position = position_dodge(width = 0.8), size = 3) +
+  geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+                position = position_dodge(width = 0.8),
+                width = 0.5) +
+  facet_wrap(~ Species) + 
+  scale_shape_manual(values = c("Pig" = 17, "Human" = 16)) +  # open circle = 1, filled = 16
+    scale_color_manual(values = c(
+    "Human" = "#f48849",   # bright yellow
+    "Pig"   = "#b83289"  # dark purple
+  )) +                    # color by Method
+  facet_grid(~ Group, scales = "free_x", space = "free_x", drop = TRUE) +
+  theme_minimal(base_size = 12) +
+ theme(
+       axis.text.x = element_text(angle = 45, hjust = 1, size =12),
+  strip.text.x = element_text(angle = 60, hjust = 0.5, vjust = 0.5, size = 12),
+      panel.grid.minor = element_blank(),
+      legend.position = "right"
+    ) +
+   scale_y_continuous(limits = c(0, 150), breaks = seq(0, 150, by = 25)) +
+  labs(
+    x = NULL,
+    y = "%",
+    color = "Method"
+  )
+
+
+  print(d)
+   ggsave(paste0("../Rocio-Figures/plots/fig5_", r, ".png"), d, width = 10, height = 6, limitsize = F, dpi = 300)
+}
+```
