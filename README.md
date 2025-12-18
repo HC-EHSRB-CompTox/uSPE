@@ -9,12 +9,11 @@ Prescottb, Kristin M. Ecclesa and Rocio Aranda-Rodriguez a\*
 
 Affiliations: a Environmental Health Science and Research Bureau,
 Healthy Environments and Consumer Safety Branch, Health Canada, 251 Sir
-Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada
-
-b Bureau of Chemical Safety, Health Products and Food Branch, Health
-Canada, 251 Sir Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada
-c Existing Substances Risk Assessment Bureau, Health Canada, 269 Laurier
-Ave., Ottawa, ON, K1A 0K9, Canada
+Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada b Bureau of
+Chemical Safety, Health Products and Food Branch, Health Canada, 251 Sir
+Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada c Existing
+Substances Risk Assessment Bureau, Health Canada, 269 Laurier Ave.,
+Ottawa, ON, K1A 0K9, Canada
 
 ## Abstract
 
