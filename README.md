@@ -1,1 +1,47 @@
-# uSPE
+
+\#Development of an Automated Micro Solid Phase Extraction Method (µSPE)
+to Quantify 21 Per- and Polyfluoroalkyl Substances Compounds in
+Biological Samples \## Authors Gong Zhanga, Adam Wawrzynczaka, Grace
+Tsanga, Amélie Blaisa, Andy Nongac, Azam F. Tayabalia, Guillaume
+Pelletiera, Allison Loana, David Prescottb, Kristin M. Ecclesa and Rocio
+Aranda-Rodriguez a\*
+
+Affiliations: a Environmental Health Science and Research Bureau,
+Healthy Environments and Consumer Safety Branch, Health Canada, 251 Sir
+Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada
+
+b Bureau of Chemical Safety, Health Products and Food Branch, Health
+Canada, 251 Sir Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada
+c Existing Substances Risk Assessment Bureau, Health Canada, 269 Laurier
+Ave., Ottawa, ON, K1A 0K9, Canada
+
+## Abstract
+
+A fully automated micro-solid phase extraction (μSPE) has been developed
+and optimized for the quantification of 21 per- and polyfluoroalkyl
+substances (PFAS) in various biological matrices, including plasma,
+serum, urine, and liver tissue. This method utilizes μSPE cartridges
+integrated with a PAL-RTC robotic system, allowing for precise flow
+control and high-throughput operation, which can process up to 54
+samples overnight. Sample homogenization of liver tissues using
+bead-mill technology eliminated sample cross-contamination and
+significantly reduced processing time, while maintaining excellent
+extraction efficiency and reproducibility. Optimization of the method
+showed that the methanol concentration in the μSPE loading solution
+significantly impacted PFAS extraction efficiency, particularly for
+longer-chain compounds and complex biological matrices. Optimal
+extraction (over 90%) was achieved with loading solutions containing
+50–60% methanol content for plasma and serum, and up to 80% methanol for
+pure water matrix. The two sequential wash steps incorporated into the
+μSPE workflow provided excellent matrix clean-up, which reduced
+background signals by over 95% compared to protein precipitation (PP)
+methods and minimizing matrix effects across all tested matrices.
+Validation data indicated the method provided sensitivity, high accuracy
+(90.3–105.1%) and precision (SDs \<10%). The method was successfully
+applied to the quantification of PFAS in human urine and plasma, as well
+as mouse samples obtained during an in vivo study. It also showed strong
+agreement with non-certified values of NIST Standard Reference Materials
+(SRM 1957/1958). The μSPE approach provides a sensitive, reproducible,
+and automated solution requiring limited biological sample volumes
+aplicable to PFAS biomonitoring, pharmacokinetic/toxicokinetic research
+and other relevant studies.
