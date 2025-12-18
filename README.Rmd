@@ -1,7 +1,8 @@
 ---
 output: github_document
 ---
-#Development of an Automated Micro Solid Phase Extraction Method (µSPE) to Quantify 21 Per- and Polyfluoroalkyl Substances Compounds in Biological Samples 
+
+# Development of an Automated Micro Solid Phase Extraction Method (µSPE) to Quantify 21 Per- and Polyfluoroalkyl Substances Compounds in Biological Samples 
 ## Authors
 Gong Zhanga, Adam Wawrzynczaka, Grace Tsanga, Amélie Blaisa, Andy Nongac, Azam F. Tayabalia, Guillaume Pelletiera, Allison Loana, David Prescottb, Kristin M. Ecclesa and Rocio Aranda-Rodriguez a* 
  

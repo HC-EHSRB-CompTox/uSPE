@@ -1,10 +1,11 @@
 
-\#Development of an Automated Micro Solid Phase Extraction Method (µSPE)
-to Quantify 21 Per- and Polyfluoroalkyl Substances Compounds in
-Biological Samples \## Authors Gong Zhanga, Adam Wawrzynczaka, Grace
-Tsanga, Amélie Blaisa, Andy Nongac, Azam F. Tayabalia, Guillaume
-Pelletiera, Allison Loana, David Prescottb, Kristin M. Ecclesa and Rocio
-Aranda-Rodriguez a\*
+# Development of an Automated Micro Solid Phase Extraction Method (µSPE) to Quantify 21 Per- and Polyfluoroalkyl Substances Compounds in Biological Samples
+
+## Authors
+
+Gong Zhanga, Adam Wawrzynczaka, Grace Tsanga, Amélie Blaisa, Andy
+Nongac, Azam F. Tayabalia, Guillaume Pelletiera, Allison Loana, David
+Prescottb, Kristin M. Ecclesa and Rocio Aranda-Rodriguez a\*
 
 Affiliations: a Environmental Health Science and Research Bureau,
 Healthy Environments and Consumer Safety Branch, Health Canada, 251 Sir
