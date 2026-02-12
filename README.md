@@ -9,34 +9,32 @@ Kristin M. Eccles and Rocio Aranda-Rodriguez
 
 ## Abstract
 
-A fully automated micro-solid phase extraction (μSPE) has been developed
-and optimized for the quantification of 21 per- and polyfluoroalkyl
-substances (PFAS) in various biological matrices, including plasma,
-serum, urine, and liver tissue. This method utilizes μSPE cartridges
-integrated with a PAL-RTC robotic system, allowing for precise flow
-control and high-throughput operation, which can process up to 54
-samples overnight. Sample homogenization of liver tissues using
-bead-mill technology eliminated sample cross-contamination and
-significantly reduced processing time, while maintaining excellent
-extraction efficiency and reproducibility. Optimization of the method
-showed that the methanol concentration in the μSPE loading solution
-significantly impacted PFAS extraction efficiency, particularly for
-longer-chain compounds and complex biological matrices. Optimal
-extraction (over 90%) was achieved with loading solutions containing
-50–60% methanol content for plasma and serum, and up to 80% methanol for
-pure water matrix. The two sequential wash steps incorporated into the
-μSPE workflow provided excellent matrix clean-up, which reduced
-background signals by over 95% compared to protein precipitation (PP)
-methods and minimizing matrix effects across all tested matrices.
-Validation data indicated the method provided sensitivity, high accuracy
-(90.3–105.1%) and precision (SDs \<10%). The method was successfully
-applied to the quantification of PFAS in human urine and plasma, as well
-as mouse samples obtained during an in vivo study. It also showed strong
-agreement with non-certified values of NIST Standard Reference Materials
-(SRM 1957/1958). The μSPE approach provides a sensitive, reproducible,
-and automated solution requiring limited biological sample volumes
-aplicable to PFAS biomonitoring, pharmacokinetic/toxicokinetic research
-and other relevant studies.
+A semi-automated micro solid-phase extraction (μSPE) method has been
+developed and optimized for the quantification of 21 per- and
+polyfluoroalkyl substances (PFAS) across various biological matrices,
+including plasma, serum, urine, and liver tissue. This method employed
+μSPE cartridges integrated with a PAL-RTC robotic system, which enabled
+precise flow control and high-throughput procedures while ensuring
+exceptional extraction efficiency and reproducibility. Sample
+homogenization of liver tissues was achieved by bead-mill technology
+which eliminated sample cross-contamination and significantly reduced
+processing time. The extraction efficiency was influenced by the
+concentration of methanol in the sample, especially for longer-chain
+PFAS (C9–14). Extraction efficiencies of over 90% extraction were
+achieved with loading solutions containing 50–60% methanol in plasma and
+serum, and up to 80% methanol in water samples. The μSPE protocol
+included two sequential wash steps that provided excellent matrix
+clean-up, and reduced background signals by over 95% compared to
+traditional protein precipitation (PP) methods. The µSPE-LC-MS/MS method
+offers high sensitivity (method detection limits between 0.008 ng/mL and
+0.048 ng/mL), along with good recoveries (90.3 to 105.1%), and precision
+(RSD \<10%). It also demonstrated strong agreement with non-certified
+values of NIST Standard Reference Materials (SRM 1957/1958). The method
+was successfully used in the analysis of PFAS in human urine and plasma,
+as well as in mouse liver samples from an in vivo study. The μSPE
+approach provides a sensitive, reproducible, and automated solution that
+requires limited biological sample volumes, making it suitable for the
+analysis of PFAS in biomonitoring and toxicokinetic studies.
 
 ## Graphical Abstract
 
