@@ -1,19 +1,11 @@
 
-# Development of an Automated Micro Solid Phase Extraction Method (µSPE) to Quantify 21 Per- and Polyfluoroalkyl Substances Compounds in Biological Samples
+# Development of an Automated Micro Solid Phase Extraction Method (µSPE) to Quantify 21 Per- and Polyfluoroalkyl Substances in Biological Samples
 
 ## Authors
 
-Gong Zhanga, Adam Wawrzynczaka, Grace Tsanga, Amélie Blaisa, Andy
-Nongac, Azam F. Tayabalia, Guillaume Pelletiera, Allison Loana, David
-Prescottb, Kristin M. Ecclesa and Rocio Aranda-Rodriguez a\*
-
-Affiliations: a Environmental Health Science and Research Bureau,
-Healthy Environments and Consumer Safety Branch, Health Canada, 251 Sir
-Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada b Bureau of
-Chemical Safety, Health Products and Food Branch, Health Canada, 251 Sir
-Frederick Banting Driveway, Ottawa, ON, K1A 0K9, Canada c Existing
-Substances Risk Assessment Bureau, Health Canada, 269 Laurier Ave.,
-Ottawa, ON, K1A 0K9, Canada
+Gong Zhang, Adam Wawrzynczak, Grace Tsang, Amélie Blais, Andy Nonga,
+Azam F. Tayabali, Guillaume Pelletier, Allison Loan, David Prescott,
+Kristin M. Eccles and Rocio Aranda-Rodriguez
 
 ## Abstract
 
@@ -45,3 +37,18 @@ agreement with non-certified values of NIST Standard Reference Materials
 and automated solution requiring limited biological sample volumes
 aplicable to PFAS biomonitoring, pharmacokinetic/toxicokinetic research
 and other relevant studies.
+
+## Graphical Abstract
+
+![](graphical.png)
+
+## Processing Notebooks
+
+All data processing, cleaning, and preprocessing notebooks are located
+in the file Plotting.Rmd
+
+## Paper
+
+Zhang, Gong et al. “A Novel Automated Micro Solid Phase Extraction
+(µSPE) Method to Quantify 21 Per- and Polyfluoroalkyl Substances
+Compounds in Biological Samples.” Advances in Sample Preparation (2026).
